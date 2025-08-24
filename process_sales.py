@@ -11,7 +11,8 @@ with open(output_file, 'w', newline='') as outfile:
     writer.writerow(['Sales', 'Date', 'Region'])
 
     for filename in csv_files:
-        with open(os.path.join(input_folder, filename), 'r', newline='') as infile:
+        filepath = os.path.join(input_folder, filename)
+        with open(filepath, 'r', newline='') as infile:
             reader = csv.DictReader(infile)
 
             for row in reader:
@@ -23,5 +24,5 @@ with open(output_file, 'w', newline='') as outfile:
                         date = row['date']
                         region = row['region']
                         writer.writerow([sales, date, region])
-                    except (ValueError, KeyError):
-                        continue
+                    except Exception as e:
+                        print(f"Skipping row due to error: {e}")
