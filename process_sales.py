@@ -1,68 +1,53 @@
-from pathlib import Path
 import pandas as pd
+from pathlib import Path
 
-
-def load_and_clean_one(csv_path: Path) -> pd.DataFrame:
-    """Load one raw CSV and return cleaned Pink Morsel rows."""
-    df = pd.read_csv(csv_path)
-
-    # normalize product & region
+def clean_file(file_path: Path) -> pd.DataFrame:
+    """Clean one daily sales CSV file and return only Pink Morsel rows."""
+    df = pd.read_csv(file_path)
+    # Standardize product and region
     df["product"] = df["product"].astype(str).str.strip().str.lower()
-    df["region"] = df["region"].astype(str).str.strip().str.lower()
+    df["region"] = df["region"].astype(str).str.strip().str.capitalize()
 
-    # keep only Pink Morsel
-    pink = df[df["product"] == "pink morsel"].copy()
-    if pink.empty:
-        return pink  # empty frame
+    # Filter for pink morsel
+    pink_df = df[df["product"] == "pink morsel"].copy()
 
-    # clean price -> number
-    pink["price"] = (
-        pink["price"]
+    # Clean price (remove $ and commas)
+    pink_df["price"] = (
+        pink_df["price"]
         .astype(str)
-        .str.strip()
         .str.replace(r"[$,]", "", regex=True)
         .astype(float)
     )
 
-    # compute Sales
-    pink["Sales"] = pink["quantity"].astype(float) * pink["price"]
+    # Calculate sales
+    pink_df["Sales"] = pink_df["quantity"].astype(float) * pink_df["price"]
 
-    # pick/rename columns
-    out = pink[["Sales", "date", "region"]].rename(
-        columns={"date": "Date", "region": "Region"}
-    )
-
-    # normalize date to datetime (kept as string when saving)
-    out["Date"] = pd.to_datetime(out["Date"]).dt.date.astype(str)
-    return out
+    # Keep only Sales, Date, Region
+    cleaned = pink_df.rename(columns={"date": "Date", "region": "Region"})
+    cleaned = cleaned[["Sales", "Date", "Region"]]
+    cleaned["Date"] = pd.to_datetime(cleaned["Date"], errors="coerce")
+    return cleaned
 
 
-def main() -> None:
+def main():
     data_dir = Path("data")
-    csvs = sorted(data_dir.glob("*.csv"))
-
-    if not csvs:
-        print("❌ No CSVs found in ./data")
+    files = list(data_dir.glob("*.csv"))
+    if not files:
+        print("❌ No CSV files found in the 'data' folder.")
         return
 
-    frames = []
-    for p in csvs:
-        print(f"Processing {p.name} ...")
-        frames.append(load_and_clean_one(p))
+    all_data = []
+    print("🔍 Processing files:")
+    for file in files:
+        print(f" - {file.name}")
+        all_data.append(clean_file(file))
 
-    if not frames:
-        print("❌ No data loaded.")
-        return
+    final_df = pd.concat(all_data, ignore_index=True).dropna()
+    final_df = final_df.sort_values("Date")
+    print(f"✅ Processed {len(final_df)} rows total.")
 
-    final = pd.concat(frames, ignore_index=True)
-    if final.empty:
-        print("❌ No Pink Morsel rows found in any file.")
-        final.to_csv("cleaned_sales.csv", index=False)
-        return
-
-    final = final.sort_values("Date")
-    final.to_csv("cleaned_sales.csv", index=False)
-    print(f"✅ cleaned_sales.csv written with {len(final)} rows.")
+    final_df.to_csv("cleaned_sales.csv", index=False)
+    print("💾 Saved cleaned_sales.csv")
 
 
 if __name__ == "__main__":
