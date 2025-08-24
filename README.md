@@ -1,22 +1,25 @@
-# Quantium Starter Repo – Pink Morsel Sales
+# 🥧 Quantium Starter Repo – Pink Morsel Sales Dashboard
 
-This project processes Soul Foods' sales data and visualises **Pink Morsel**
-sales over time to answer:
+This project processes Soul Foods' sales data and visualises **Pink Morsel sales** over time to answer:  
+> Were sales higher before or after the price increase on **2021-01-15**?
 
-> **Were sales higher before or after the price increase on 2021-01-15?**
+It includes:  
+✅ Data cleaning & processing scripts  
+✅ A Dash web app for visualisation  
+✅ A test suite to ensure the app works correctly  
 
 ---
 
 ## 📂 Project Structure
 
 quantium-starter-repo/
-├─ data/
-│ ├─ daily_sales_data_0.csv
-│ ├─ daily_sales_data_1.csv
-│ └─ daily_sales_data_2.csv
-├─ cleaned_sales.csv # generated output
-├─ process_sales.py # build cleaned_sales.csv
-├─ clean_data.py # optional wrapper
-├─ app.py # Dash visualiser
-├─ requirements.txt
-└─ README.md
+├── data/ # Raw data files
+├── cleaned_sales.csv # Processed output
+├── app.py # Dash app
+├── process_sales.py # Build cleaned_sales.csv
+├── clean_data.py # Data cleaning script
+├── check_products.py # Optional checks
+├── tests/
+│ └── test_app.py # Automated tests for the Dash app
+├── requirements.txt # Dependencies
+└── README.md # Project documentation
