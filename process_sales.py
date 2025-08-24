@@ -1,38 +1,40 @@
 import pandas as pd
 from pathlib import Path
 
-# Path to data folder
+# Define the path to your data folder
 data_folder = Path("data")
 
-# Get all CSV files
+# Find all CSV files in the data folder
 csv_files = list(data_folder.glob("*.csv"))
 
-# Create an empty list to store DataFrames
+# List to store processed DataFrames
 df_list = []
 
-# Process each file
 for file in csv_files:
+    # Read the CSV
     df = pd.read_csv(file)
     
-    # Filter for Pink Morsel
+    # Keep only rows with "Pink Morsel"
     df = df[df["product"] == "Pink Morsel"]
     
-    # Create Sales column
+    # Calculate Sales
     df["Sales"] = df["quantity"] * df["price"]
     
-    # Keep only required columns
+    # Keep only the required columns
     df = df[["Sales", "date", "region"]]
-    
-    # Rename columns to match desired output
     df.rename(columns={"date": "Date", "region": "Region"}, inplace=True)
     
-    # Append to list
+    # Add to list
     df_list.append(df)
 
-# Combine all into one DataFrame
-final_df = pd.concat(df_list)
+# Combine all DataFrames
+final_df = pd.concat(df_list, ignore_index=True)
 
-# Save to CSV
-final_df.to_csv("formatted_sales.csv", index=False)
+# Optional: sort by Date for readability
+final_df.sort_values(by="Date", inplace=True)
 
-print("✅ formatted_sales.csv created successfully!")
+# Save final CSV
+output_file = "formatted_sales.csv"
+final_df.to_csv(output_file, index=False)
+
+print(f"✅ Successfully created {output_file} with {len(final_df)} rows!")
