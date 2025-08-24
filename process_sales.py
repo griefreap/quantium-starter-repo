@@ -22,7 +22,7 @@ with open(output_file, 'w', newline='') as outfile:
             
             # Process each row
             for row in reader:
-                if row['product'] == 'Pink Morsel':
+                if row['product'].strip().lower() == 'pink morsel':
                     try:
                         quantity = int(row['quantity'])
                         price = float(row['price'])
