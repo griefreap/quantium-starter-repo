@@ -1,124 +1,107 @@
 import pandas as pd
-import plotly.express as px
-from dash import Dash, dcc, html, Input, Output
+import dash
+from dash import dcc, html
+from dash.dependencies import Input, Output
+import plotly.graph_objs as go
 
+# =======================
+# Load and prepare data
+# =======================
+data = pd.read_csv("cleaned_sales.csv")
+data["Date"] = pd.to_datetime(data["Date"])
 
-# load data
-df = pd.read_csv("cleaned_sales.csv")
-df["Date"] = pd.to_datetime(df["Date"])
-df["Region"] = df["Region"].astype(str).str.lower()
+regions = ["All"] + sorted(data["Region"].unique())
 
-app = Dash(__name__)
-app.title = "Pink Morsel Sales Visualiser"
+# =======================
+# Initialize Dash app
+# =======================
+app = dash.Dash(__name__)
+app.title = "Pink Morsel Sales Dashboard"
+server = app.server
 
-PRICE_INCREASE = pd.Timestamp("2021-01-15")
-
-page_style = {
-    "fontFamily": "Arial, sans-serif",
-    "background": "#f8f9fa",
-    "padding": "24px",
-}
-
-card_style = {
-    "maxWidth": "1000px",
-    "margin": "0 auto",
-    "background": "#ffffff",
-    "padding": "20px",
-    "borderRadius": "10px",
-    "boxShadow": "0 4px 10px rgba(0,0,0,0.08)",
-}
-
+# =======================
+# App Layout
+# =======================
 app.layout = html.Div(
-    style=page_style,
-    children=[
+    [
         html.H1(
             "Soul Foods · Pink Morsel Sales",
             style={"textAlign": "center", "marginBottom": "10px"},
+            id="header",  # <-- ID added for testing
         ),
         html.P(
-            "Use the region selector to focus the chart. "
-            "Dashed line marks the 2021-01-15 price increase.",
-            style={"textAlign": "center", "marginBottom": "20px"},
+            "Visualizing sales before and after the 2021-01-15 price increase.",
+            style={"textAlign": "center"},
         ),
         html.Div(
-            style={"textAlign": "center", "marginBottom": "16px"},
-            children=[
-                html.Label(
-                    "Region:",
-                    style={"fontWeight": "bold", "marginRight": "12px"},
-                ),
+            [
+                html.Label("Filter by Region:", style={"fontWeight": "bold"}),
                 dcc.RadioItems(
-                    id="region",
-                    options=[
-                        {"label": "All", "value": "all"},
-                        {"label": "North", "value": "north"},
-                        {"label": "East", "value": "east"},
-                        {"label": "South", "value": "south"},
-                        {"label": "West", "value": "west"},
-                    ],
-                    value="all",
-                    labelStyle={
-                        "display": "inline-block",
-                        "marginRight": "16px",
-                        "cursor": "pointer",
-                    },
-                    inputStyle={"marginRight": "6px"},
+                    id="region-picker",  # <-- ID added for testing
+                    options=[{"label": r, "value": r} for r in regions],
+                    value="All",
+                    labelStyle={"display": "inline-block", "marginRight": "10px"},
                 ),
             ],
+            style={
+                "border": "1px solid #ddd",
+                "padding": "10px",
+                "marginBottom": "20px",
+                "borderRadius": "5px",
+            },
         ),
-        html.Div(
-            style=card_style,
-            children=[dcc.Graph(id="sales-line")],
-        ),
+        dcc.Graph(id="sales-graph"),  # <-- ID added for testing
     ],
+    style={"maxWidth": "1000px", "margin": "auto"},
 )
 
 
-@app.callback(Output("sales-line", "figure"), Input("region", "value"))
-def update_chart(region_value: str):
-    if region_value == "all":
-        dff = df.copy()
-        title_suffix = "All Regions"
+# =======================
+# Callback for interactivity
+# =======================
+@app.callback(
+    Output("sales-graph", "figure"),
+    Input("region-picker", "value"),
+)
+def update_graph(selected_region):
+    if selected_region == "All":
+        filtered = data
+        title_region = "All Regions"
     else:
-        dff = df[df["Region"] == region_value]
-        title_suffix = region_value.capitalize()
+        filtered = data[data["Region"] == selected_region]
+        title_region = selected_region
 
-    # aggregate by date
-    series = (
-        dff.groupby("Date", as_index=False)["Sales"]
-        .sum()
-        .sort_values("Date")
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=filtered["Date"],
+            y=filtered["Sales"],
+            mode="lines",
+            name="Sales",
+            line=dict(color="blue"),
+        )
     )
 
-    fig = px.line(
-        series,
-        x="Date",
-        y="Sales",
-        labels={"Date": "Date", "Sales": "Total Sales ($)"},
-        title=f"Pink Morsel Sales Over Time · {title_suffix}",
+    fig.add_vline(
+        x=pd.Timestamp("2021-01-15"),
+        line=dict(color="red", dash="dash"),
+        annotation_text="Price Increase (2021-01-15)",
+        annotation_position="top right",
+    )
+
+    fig.update_layout(
+        title=f"Pink Morsel Sales Over Time · {title_region}",
+        xaxis_title="Date",
+        yaxis_title="Total Sales ($)",
         template="plotly_white",
     )
 
-    # price increase marker
-    ymax = series["Sales"].max() if not series.empty else 0
-    fig.add_vline(
-        x=PRICE_INCREASE, line_width=2, line_dash="dash", line_color="crimson"
-    )
-    fig.add_annotation(
-        x=PRICE_INCREASE,
-        y=ymax,
-        text="Price Increase (2021-01-15)",
-        showarrow=True,
-        arrowhead=2,
-        ax=0,
-        ay=-40,
-        bgcolor="rgba(255,255,255,0.7)",
-        bordercolor="crimson",
-    )
-
-    fig.update_layout(margin=dict(l=40, r=40, t=60, b=40))
     return fig
 
 
+# =======================
+# Run app
+# =======================
 if __name__ == "__main__":
     app.run(debug=True)
