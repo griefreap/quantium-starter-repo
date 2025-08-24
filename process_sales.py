@@ -1,26 +1,19 @@
 import csv
 import os
 
-# Folder containing the data files
 input_folder = 'data'
-
-# Output file name
 output_file = 'cleaned_sales.csv'
 
-# Automatically get all CSV files in the data folder
 csv_files = [f for f in os.listdir(input_folder) if f.endswith('.csv')]
 
-# Open the output file for writing
 with open(output_file, 'w', newline='') as outfile:
     writer = csv.writer(outfile)
-    writer.writerow(['Sales', 'Date', 'Region'])  # Write header
+    writer.writerow(['Sales', 'Date', 'Region'])
 
-    # Loop through each input CSV file
     for filename in csv_files:
         with open(os.path.join(input_folder, filename), 'r', newline='') as infile:
             reader = csv.DictReader(infile)
-            
-            # Process each row
+
             for row in reader:
                 if row['product'].strip().lower() == 'pink morsel':
                     try:
@@ -31,5 +24,4 @@ with open(output_file, 'w', newline='') as outfile:
                         region = row['region']
                         writer.writerow([sales, date, region])
                     except (ValueError, KeyError):
-                        # Skip rows with missing or invalid data
                         continue
