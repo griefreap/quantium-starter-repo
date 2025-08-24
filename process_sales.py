@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 
+
 # Path to data folder
 data_folder = Path("data")
 
@@ -23,7 +24,9 @@ for file in csv_files:
     filtered = df[df["product"] == "pink morsel"]
 
     # Clean price column: remove '$' and convert to float
-    filtered["price"] = filtered["price"].replace("[\$,]", "", regex=True).astype(float)
+    filtered["price"] = (
+        filtered["price"].replace(r"[\$,]", "", regex=True).astype(float)
+    )
 
     # Calculate Sales
     filtered["Sales"] = filtered["quantity"] * filtered["price"]
