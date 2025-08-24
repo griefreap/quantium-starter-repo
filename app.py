@@ -19,18 +19,24 @@ ACCENT_COLOR = "#e63946"
 
 # Layout
 app.layout = html.Div(
-    style={"fontFamily": "Arial, sans-serif", "backgroundColor": BACKGROUND_COLOR, "padding": "20px"},
+    style={
+        "fontFamily": "Arial, sans-serif",
+        "backgroundColor": BACKGROUND_COLOR,
+        "padding": "20px",
+    },
     children=[
         html.H1(
             "Soul Foods: Pink Morsel Sales Visualiser",
-            style={"textAlign": "center", "color": TEXT_COLOR, "marginBottom": "20px"}
+            style={"textAlign": "center", "color": TEXT_COLOR, "marginBottom": "20px"},
         ),
-
         # Radio button for region selection
         html.Div(
             style={"textAlign": "center", "marginBottom": "20px"},
             children=[
-                html.Label("Select a Region:", style={"fontWeight": "bold", "color": TEXT_COLOR}),
+                html.Label(
+                    "Select a Region:",
+                    style={"fontWeight": "bold", "color": TEXT_COLOR},
+                ),
                 dcc.RadioItems(
                     id="region-selector",
                     options=[
@@ -38,14 +44,13 @@ app.layout = html.Div(
                         {"label": "North", "value": "north"},
                         {"label": "East", "value": "east"},
                         {"label": "South", "value": "south"},
-                        {"label": "West", "value": "west"}
+                        {"label": "West", "value": "west"},
                     ],
                     value="all",
-                    labelStyle={"display": "inline-block", "marginRight": "20px"}
-                )
-            ]
+                    labelStyle={"display": "inline-block", "marginRight": "20px"},
+                ),
+            ],
         ),
-
         # Chart container
         html.Div(
             style={
@@ -54,20 +59,16 @@ app.layout = html.Div(
                 "backgroundColor": CARD_COLOR,
                 "padding": "20px",
                 "borderRadius": "10px",
-                "boxShadow": "0 4px 8px rgba(0,0,0,0.1)"
+                "boxShadow": "0 4px 8px rgba(0,0,0,0.1)",
             },
-            children=[
-                dcc.Graph(id="sales-line-chart")
-            ]
-        )
-    ]
+            children=[dcc.Graph(id="sales-line-chart")],
+        ),
+    ],
 )
 
+
 # Callback to update chart based on region
-@app.callback(
-    Output("sales-line-chart", "figure"),
-    Input("region-selector", "value")
-)
+@app.callback(Output("sales-line-chart", "figure"), Input("region-selector", "value"))
 def update_chart(selected_region):
     # Filter data
     if selected_region == "all":
@@ -85,7 +86,7 @@ def update_chart(selected_region):
         y="Sales",
         labels={"Date": "Date", "Sales": "Total Sales ($)"},
         title=f"Pink Morsel Sales Over Time ({selected_region.capitalize()})",
-        template="plotly_white"
+        template="plotly_white",
     )
 
     # Add vertical line for price increase
@@ -95,7 +96,7 @@ def update_chart(selected_region):
         y0=0,
         x1="2021-01-15",
         y1=sales_by_date["Sales"].max() if not sales_by_date.empty else 0,
-        line=dict(color=ACCENT_COLOR, width=2, dash="dash")
+        line=dict(color=ACCENT_COLOR, width=2, dash="dash"),
     )
 
     fig.add_annotation(
@@ -105,13 +106,13 @@ def update_chart(selected_region):
         showarrow=True,
         arrowhead=2,
         ax=0,
-        ay=-40
+        ay=-40,
     )
 
     fig.update_layout(
         margin={"l": 40, "r": 40, "t": 80, "b": 40},
         title_font=dict(size=20, color=TEXT_COLOR),
-        font=dict(color=TEXT_COLOR)
+        font=dict(color=TEXT_COLOR),
     )
 
     return fig
