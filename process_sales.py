@@ -1,28 +1,38 @@
-import csv
-import os
+import pandas as pd
+from pathlib import Path
 
-input_folder = 'data'
-output_file = 'cleaned_sales.csv'
+# Path to data folder
+data_folder = Path("data")
 
-csv_files = [f for f in os.listdir(input_folder) if f.endswith('.csv')]
+# Get all CSV files
+csv_files = list(data_folder.glob("*.csv"))
 
-with open(output_file, 'w', newline='') as outfile:
-    writer = csv.writer(outfile)
-    writer.writerow(['Sales', 'Date', 'Region'])
+# Create an empty list to store DataFrames
+df_list = []
 
-    for filename in csv_files:
-        filepath = os.path.join(input_folder, filename)
-        with open(filepath, 'r', newline='') as infile:
-            reader = csv.DictReader(infile)
+# Process each file
+for file in csv_files:
+    df = pd.read_csv(file)
+    
+    # Filter for Pink Morsel
+    df = df[df["product"] == "Pink Morsel"]
+    
+    # Create Sales column
+    df["Sales"] = df["quantity"] * df["price"]
+    
+    # Keep only required columns
+    df = df[["Sales", "date", "region"]]
+    
+    # Rename columns to match desired output
+    df.rename(columns={"date": "Date", "region": "Region"}, inplace=True)
+    
+    # Append to list
+    df_list.append(df)
 
-            for row in reader:
-                if row['product'].strip().lower() == 'pink mors':
-                    try:
-                        quantity = int(row['quantity'])
-                        price = float(row['price'].replace('$', ''))
-                        sales = quantity * price
-                        date = row['date']
-                        region = row['region']
-                        writer.writerow([sales, date, region])
-                    except Exception as e:
-                        print(f"Skipping row due to error: {e}")
+# Combine all into one DataFrame
+final_df = pd.concat(df_list)
+
+# Save to CSV
+final_df.to_csv("formatted_sales.csv", index=False)
+
+print("✅ formatted_sales.csv created successfully!")
